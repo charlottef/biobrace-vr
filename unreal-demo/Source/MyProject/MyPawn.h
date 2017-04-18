@@ -1,11 +1,11 @@
 // Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "GameFramework/Pawn.h"
-#include "SpiderSensor/sensorData.h"
-#include "QuadcopterPawn.generated.h"
+#include "Serial/sensorData.h"
+#include "MyPawn.generated.h"
 
 UCLASS(config=Game)
-class AQuadcopterPawn : public APawn
+class AMyPawn : public APawn
 {
 	GENERATED_BODY()
 
@@ -99,10 +99,8 @@ private:
 	// Move Speed
 	FVector CurVelocity;
 
-	// Spider Sensor
-	hid_device *handle;
-	sensorData *sensor;
-	float normalized_data[64];
+	// Biobrace
+	BioBrace* biobrace;
 
 public:
 	/** Returns Mesh subobject **/

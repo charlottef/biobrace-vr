@@ -4,7 +4,7 @@
 #include "QuadcopterPawn.h"
 
 
-AQuadcopterPawn::AQuadcopterPawn(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+AMyPawn::AMyPawn(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
@@ -60,29 +60,14 @@ AQuadcopterPawn::AQuadcopterPawn(const FObjectInitializer& ObjectInitializer) : 
 	UpAcceleration = 300.0f;
 
 	// Spider Sensor Init
-	handle = hid_open(0x4d8, 0x3f, NULL); // create handle to open device
-
-	sensor = new sensorData();
-	for (int i = 0; i < 64; i++) {
-		normalized_data[i] = 0;
-	}
+	biobrace = new BioBrace();
 }
 
-void AQuadcopterPawn::Tick(float DeltaSeconds)
+void AMyPawn::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// [0] - [2] accel & [3] - [5] gyro
-	unsigned char buf[65];
-	int sensor_data[64];
-
-	sensor->getData(buf, sensor_data, normalized_data, handle); // get normalized data
-	TurnSpeed -= normalized_data[5] * 40.0f;
-
-	//if (handle)
-	//{
-	//	sensor->detectGesture(normalized_data); // detect the gesture
-	//}
+	auto data = biobrace->update();
 
 	// Clamp Rotations
 	CurRotation.Pitch = FMath::ClampAngle(CurRotation.Pitch, -45.f, 45.f);
@@ -113,7 +98,7 @@ void AQuadcopterPawn::Tick(float DeltaSeconds)
 
 }
 
-void AQuadcopterPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+void AMyPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("Lolwat"));
@@ -121,26 +106,26 @@ void AQuadcopterPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor*
 	CurVelocity = FVector::ZeroVector;
 }
 
-void AQuadcopterPawn::BeginDestroy()
+void AMyPawn::BeginDestroy()
 {
 	Super::BeginDestroy();
-	hid_close(handle);
+	delete biobrace;
 }
 
 
-void AQuadcopterPawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void AMyPawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
 	check(InputComponent);
 
 	// Bind our control axis' to callback functions
-	InputComponent->BindAxis("Thrust", this, &AQuadcopterPawn::ThrustInput);
-	InputComponent->BindAxis("MoveUp", this, &AQuadcopterPawn::MoveUpInput);
-	InputComponent->BindAxis("MoveRight", this, &AQuadcopterPawn::MoveRightInput);
-	InputComponent->BindAxis("Rise", this, &AQuadcopterPawn::RiseInput);
-	InputComponent->BindAxis("Turn", this, &AQuadcopterPawn::TurnInput);
+	InputComponent->BindAxis("Thrust", this, &AMyPawn::ThrustInput);
+	InputComponent->BindAxis("MoveUp", this, &AMyPawn::MoveUpInput);
+	InputComponent->BindAxis("MoveRight", this, &AMyPawn::MoveRightInput);
+	InputComponent->BindAxis("Rise", this, &AMyPawn::RiseInput);
+	InputComponent->BindAxis("Turn", this, &AMyPawn::TurnInput);
 }
 
-void AQuadcopterPawn::ThrustInput(float Val)
+void AMyPawn::ThrustInput(float Val)
 {
 	// Is there no input?
 	bool bHasInput = !FMath::IsNearlyEqual(Val, 0.f);
@@ -155,31 +140,31 @@ void AQuadcopterPawn::ThrustInput(float Val)
 	
 }
 
-/*void AQuadcopterPawn::PlaySound()
+/*void AMyPawn::PlaySound()
 {
 	LeoSound->PawnMakeNoise(1.0, FVector::ZeroVector, true, tSound);
 }*/
 
-void AQuadcopterPawn::MoveUpInput(float Val)
+void AMyPawn::MoveUpInput(float Val)
 {
 	CurRotation.Pitch = FMath::FInterpTo(CurRotation.Pitch, FMath::Sign(Val) * 30, GetWorld()->GetDeltaSeconds(), 1.f);
 	CurVelocity.Y +=  Val * 300 * GetWorld()->GetDeltaSeconds();
 	//PlaySound();
 }
 
-void AQuadcopterPawn::MoveRightInput(float Val)
+void AMyPawn::MoveRightInput(float Val)
 {
 	CurRotation.Roll = FMath::FInterpTo(CurRotation.Roll, FMath::Sign(Val) * 45, GetWorld()->GetDeltaSeconds(), 1.f);
 	CurVelocity.X += Val * 300 * GetWorld()->GetDeltaSeconds();
 }
 
 
-void AQuadcopterPawn::RiseInput(float Val)
+void AMyPawn::RiseInput(float Val)
 {
 	CurVelocity.Z += Val * 300 * GetWorld()->GetDeltaSeconds();
 }
 
-void AQuadcopterPawn::TurnInput(float Val)
+void AMyPawn::TurnInput(float Val)
 {
 	TurnSpeed += (Val * 1.f);
 }

@@ -22,7 +22,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#include "Quadcopter.h"
+#include "MyProject.h"
 #include <windows.h>
 
 #ifndef _NTDEF_

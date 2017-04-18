@@ -24,7 +24,7 @@
  * @defgroup API hidapi API
  */
 
-#include "Quadcopter.h"
+#include "MyProject.h"
 
 #ifndef HIDAPI_H__
 #define HIDAPI_H__
